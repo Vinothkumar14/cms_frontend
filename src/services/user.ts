@@ -1,7 +1,13 @@
-// services/user.ts
 import api from './api';
 
-export const fetchUserFromApi = async (userId: string) => {
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string | null;
+}
+
+export const fetchUserFromApi = async (userId: string): Promise<User> => {
   try {
     const response = await api.get(`/api/users/${userId}?populate=role`);
     const userData = response.data.data;
@@ -18,4 +24,12 @@ export const fetchUserFromApi = async (userId: string) => {
     console.error('Failed to fetch user from API:', error);
     throw error;
   }
+};
+
+// Call this to fetch user and save role in localStorage
+export const updateLocalUserFromApi = async (userId: string) => {
+  const user = await fetchUserFromApi(userId);
+  localStorage.setItem('userRole', user.role ?? '');
+  localStorage.setItem('user', JSON.stringify(user));
+  return user;
 };

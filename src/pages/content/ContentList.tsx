@@ -7,7 +7,7 @@ import { Content, Contentstatuss } from '../../types/content';
 import ContentService from '../../services/content.service';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-toastify';
-import { fetchUserFromApi } from '../../services/user'; // ✅ Import here
+import { fetchUserFromApi, updateLocalUserFromApi } from '../../services/user';
 
 const ContentList = () => {
   const { user } = useAuth();

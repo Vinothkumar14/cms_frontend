@@ -4,7 +4,7 @@ import { Card, CardContent } from '../../components/ui/Card';
 import { useAuth } from '../../contexts/AuthContext';
 import ContentService from '../../services/content.service';
 import { Content, Contentstatuss } from '../../types/content';
-import fetchUserWithRole from '../../services/user';
+import {updateLocalUserFromApi} from '../../services/user';
 
 
 const Dashboard = () => {
@@ -28,7 +28,7 @@ const Dashboard = () => {
     };
     const fetchRole  = async () => {
       try {
-        await fetchUserWithRole.updateLocalUserFromApi();
+        await updateLocalUserFromApi();
         setRoleName(localStorage.getItem('user'));
         console.log(rolename);
       } catch (error) {

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:1337';
+const API_URL = 'https://rational-dogs-2dd751758f.strapiapp.com';
 
 const api = axios.create({
   baseURL: API_URL,

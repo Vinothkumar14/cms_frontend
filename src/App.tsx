@@ -43,7 +43,7 @@ function App() {
         >
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/content" element={<ContentList />} />
-          
+
           {/* Admin and Super Admin only routes */}
           <Route 
             path="/content/create" 
@@ -53,7 +53,7 @@ function App() {
               </RoleBasedRoute>
             } 
           />
-          
+
           {/* Super Admin only routes */}
           <Route 
             path="/content/edit/:id" 
@@ -65,9 +65,9 @@ function App() {
           />
         </Route>
 
-        {/* Redirect root to dashboard or login */}
-        <Route path="/" element={<Navigate to="/dashboard\" replace />} />
-        
+        {/* Redirect root to dashboard */}
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
         {/* 404 Route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
