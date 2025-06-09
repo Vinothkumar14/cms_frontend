@@ -1,166 +1,29 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { AuthState, User, LoginCredentials, RegisterCredentials } from '../types/auth';
-import AuthService from '../services/auth.service';
-import { toast } from 'react-toastify';
-import { fetchUserFromApi } from '../services/user';
+// src/services/auth.service.ts
 
-interface AuthContextType extends AuthState {
-  login: (credentials: LoginCredentials) => Promise<void>;
-  register: (userData: RegisterCredentials) => Promise<void>;
-  logout: () => Promise<void>;
-  updateUserFromApi: () => Promise<void>;
-}
+import axios from 'axios';
+import { LoginCredentials, RegisterCredentials } from '../types/auth';
 
-const initialState: AuthState = {
-  user: null,
-  token: null,
-  isAuthenticated: false,
-  isLoading: true,
+const API_URL = 'https://your-backend-api.com/api/auth';
+
+const login = async (credentials: LoginCredentials) => {
+  const res = await axios.post(`${API_URL}/login`, credentials);
+  return res.data;
 };
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, setState] = useState<AuthState>(initialState);
-
-  // Check for existing session on mount
-  useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        const authData = await AuthService.getCurrentUser();
-        
-        if (authData) {
-          setState({
-            user: authData.user,
-            token: authData.token,
-            isAuthenticated: true,
-            isLoading: false,
-          });
-        } else {
-          setState({
-            ...initialState,
-            isLoading: false,
-          });
-        }
-      } catch (error) {
-        console.error('Auth initialization error:', error);
-        setState({
-          ...initialState,
-          isLoading: false,
-        });
-      }
-    };
-
-    initializeAuth();
-  }, []);
-
-  const login = async (credentials: LoginCredentials) => {
-    try {
-      setState(prev => ({ ...prev, isLoading: true }));
-      
-      const authData = await AuthService.login(credentials);
-      
-      localStorage.setItem('token', authData.token);
-      localStorage.setItem('user', JSON.stringify(authData.user));
-      
-      setState({
-        user: authData.user,
-        token: authData.token,
-        isAuthenticated: true,
-        isLoading: false,
-      });
-      
-      toast.success('Login successful');
-    } catch (error) {
-      setState(prev => ({ ...prev, isLoading: false }));
-      toast.error('Login failed. Please check your credentials.');
-      throw error;
-    }
-  };
-
-  const register = async (userData: RegisterCredentials) => {
-    try {
-      setState(prev => ({ ...prev, isLoading: true }));
-      
-      const authData = await AuthService.register(userData);
-      
-      localStorage.setItem('token', authData.token);
-      localStorage.setItem('user', JSON.stringify(authData.user));
-      
-      setState({
-        user: authData.user,
-        token: authData.token,
-        isAuthenticated: true,
-        isLoading: false,
-      });
-      
-      toast.success('Registration successful');
-    } catch (error) {
-      setState(prev => ({ ...prev, isLoading: false }));
-      toast.error('Registration failed. Please try again.');
-      throw error;
-    }
-  };
-
-  const updateUserFromApi = async () => {
-    const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-    if (!storedUser?.id) return;
-
-    try {
-      const updatedUser = await fetchUserFromApi(storedUser.id);
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-
-      setState(prev => ({
-        ...prev,
-        user: updatedUser,
-      }));
-    } catch (error) {
-      console.error('Failed to update user from API:', error);
-    }
-  };
-
-  const logout = async () => {
-    try {
-      setState(prev => ({ ...prev, isLoading: true }));
-      
-      await AuthService.logout();
-      
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-
-      setState({
-        user: null,
-        token: null,
-        isAuthenticated: false,
-        isLoading: false,
-      });
-      
-      toast.success('Logged out successfully');
-    } catch (error) {
-      setState(prev => ({ ...prev, isLoading: false }));
-      console.error('Logout error:', error);
-    }
-  };
-
-  return (
-    <AuthContext.Provider
-      value={{
-        ...state,
-        login,
-        register,
-        logout,
-        updateUserFromApi,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+const register = async (data: RegisterCredentials) => {
+  const res = await axios.post(`${API_URL}/register`, data);
+  return res.data;
 };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+const getCurrentUser = async () => {
+  const token = localStorage.getItem('token');
+  const user = JSON.parse(localStorage.getItem('user') || 'null');
+  return { token, user };
 };
+
+const logout = async () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+};
+
+export default { login, register, getCurrentUser, logout };

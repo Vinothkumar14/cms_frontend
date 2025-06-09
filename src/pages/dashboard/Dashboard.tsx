@@ -4,7 +4,7 @@ import { Card, CardContent } from '../../components/ui/Card';
 import { useAuth } from '../../contexts/AuthContext';
 import ContentService from '../../services/content.service';
 import { Content, Contentstatuss } from '../../types/content';
-import fetchUserWithRole from '../../services/user';
+import { fetchUserFromApi } from '../../services/user';
 
 
 const Dashboard = () => {
@@ -26,21 +26,25 @@ const Dashboard = () => {
         setIsLoading(false);
       }
     };
-    const fetchRole  = async () => {
+  
+    const fetchRole = async () => {
       try {
-        await fetchUserWithRole.updateLocalUserFromApi();
-        setRoleName(localStorage.getItem('user'));
-        console.log(rolename);
+        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        if (!storedUser?.id) return;
+  
+        const updatedUser = await fetchUserFromApi(storedUser.id);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        setRoleName(updatedUser.role);
       } catch (error) {
         console.error('Failed to fetch user role:', error);
-      } finally {
         setRoleName(null);
       }
     };
+  
     fetchRole();
     fetchContents();
   }, []);
-
+  
   const totalContent = contents.length;
   const publishedContent = contents.filter(c => c.statuss === Contentstatuss.PUBLISHED).length;
   const draftContent = contents.filter(c => c.statuss === Contentstatuss.DRAFT).length;
