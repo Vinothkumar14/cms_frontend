@@ -4,13 +4,13 @@ import { Card, CardContent } from '../../components/ui/Card';
 import { useAuth } from '../../contexts/AuthContext';
 import ContentService from '../../services/content.service';
 import { Content, Contentstatuss } from '../../types/content';
-import {updateLocalUserFromApi} from '../../services/user';
+import fetchUserWithRole from '../../services/user';
 
 
 const Dashboard = () => {
   const { user } = useAuth();
   const [contents, setContents] = useState<Content[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [, setIsLoading] = useState(true);
   const [rolename, setRoleName] = useState<string | null>(null);
 
 
@@ -28,7 +28,7 @@ const Dashboard = () => {
     };
     const fetchRole  = async () => {
       try {
-        await updateLocalUserFromApi();
+        await fetchUserWithRole.updateLocalUserFromApi();
         setRoleName(localStorage.getItem('user'));
         console.log(rolename);
       } catch (error) {

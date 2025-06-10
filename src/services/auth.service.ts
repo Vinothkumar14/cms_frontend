@@ -1,4 +1,4 @@
-import { AuthState, User, LoginCredentials, RegisterCredentials } from '../types/auth';
+import {  User, LoginCredentials, RegisterCredentials } from '../types/auth';
 
 const API_BASE_URL ='https://rational-dogs-2dd751758f.strapiapp.com';
 

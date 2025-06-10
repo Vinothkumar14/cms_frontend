@@ -5,12 +5,12 @@ import { Card, CardContent } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import { Content, Contentstatuss } from '../../types/content';
 import ContentService from '../../services/content.service';
-import { useAuth } from '../../contexts/AuthContext';
+// import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-toastify';
-import { fetchUserFromApi, updateLocalUserFromApi } from '../../services/user';
+import  fetchUserWithRole  from '../../services/user'; // ✅ Import here
 
 const ContentList = () => {
-  const { user } = useAuth();
+  // const { user } = useAuth();
   const [contents, setContents] = useState<Content[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);

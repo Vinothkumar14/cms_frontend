@@ -1,14 +1,21 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { AuthState, User, LoginCredentials, RegisterCredentials } from '../types/auth';
+import { AuthState, LoginCredentials, RegisterCredentials } from '../types/auth'; // Removed unused User import
 import AuthService from '../services/auth.service';
+import { fetchUserWithRole } from '../services/user';
 import { toast } from 'react-toastify';
-import { fetchUserFromApi } from '../services/user'; 
-
 
 interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (userData: RegisterCredentials) => Promise<void>;
   logout: () => Promise<void>;
+  updateUserFromApi: () => Promise<User | undefined>; // Updated return type
+}
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string | null;
 }
 
 const initialState: AuthState = {
@@ -22,13 +29,15 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, setState] = useState<AuthState>(initialState);
-  const [user, setUser] = useState(null);
 
-
-  // Check for existing session on mount
-  useEffect(() => {
-    const initializeAuth = async () => {
-      try {
+  const initializeAuth = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const userString = localStorage.getItem('user');
+      
+      if (token && userString) {
+        // const user = JSON.parse(userString);
+        // Verify token is still valid
         const authData = await AuthService.getCurrentUser();
         
         if (authData) {
@@ -38,23 +47,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             isAuthenticated: true,
             isLoading: false,
           });
-        } else {
-          setState({
-            ...initialState,
-            isLoading: false,
-          });
+          return;
         }
-      } catch (error) {
-        console.error('Auth initialization error:', error);
-        setState({
-          ...initialState,
-          isLoading: false,
-        });
       }
-    };
+      
+      // If no valid session found
+      setState({
+        ...initialState,
+        isLoading: false,
+      });
+    } catch (error) {
+      console.error('Auth initialization error:', error);
+      // Clear invalid auth data
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      setState({
+        ...initialState,
+        isLoading: false,
+      });
+    }
+  };
 
+  useEffect(() => {
     initializeAuth();
   }, []);
+
+  const updateUserFromApi = async (): Promise<User | undefined> => {
+    try {
+      if (!state.user?.id) return undefined;
+      
+      const updatedUser = await fetchUserWithRole(state.user.id);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      setState(prev => ({
+        ...prev,
+        user: updatedUser,
+      }));
+      
+      return updatedUser;
+    } catch (error) {
+      console.error('Failed to update user:', error);
+      throw error;
+    }
+  };
 
   const login = async (credentials: LoginCredentials) => {
     try {
@@ -62,11 +97,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       const authData = await AuthService.login(credentials);
       
-      // Store auth data in local storage for persistence
+      // Store auth data
       localStorage.setItem('token', authData.token);
       localStorage.setItem('user', JSON.stringify(authData.user));
-     
-
       
       setState({
         user: authData.user,
@@ -89,7 +122,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       const authData = await AuthService.register(userData);
       
-      // Store auth data in local storage for persistence
       localStorage.setItem('token', authData.token);
       localStorage.setItem('user', JSON.stringify(authData.user));
       
@@ -107,20 +139,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw error;
     }
   };
-  const updateUserFromApi = async () => {
-    const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-    if (!storedUser?.id) return;
-
-    const updatedUser = await fetchUserFromApi(storedUser.id);
-    localStorage.setItem('user', JSON.stringify(updatedUser));
-    setUser(updatedUser); // ✅ This works here
-  };
 
   const logout = async () => {
     try {
       setState(prev => ({ ...prev, isLoading: true }));
       
       await AuthService.logout();
+      
+      // Clear all auth data
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
       
       setState({
         user: null,
@@ -143,6 +171,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         register,
         logout,
+        updateUserFromApi,
       }}
     >
       {children}
